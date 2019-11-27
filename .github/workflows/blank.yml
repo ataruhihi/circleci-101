@@ -1,17 +1,8 @@
-name: CI
-
-on: [push]
-
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v1
-    - name: Run a one-line script
-      run: echo Hello, world!
-    - name: Run a multi-line script
-      run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+version: 2
+ jobs:
+   build:
+     docker:
+       - image: circleci/ruby:2.4.1
+     steps:
+       - checkout
+       - run: echo "A first hello"
