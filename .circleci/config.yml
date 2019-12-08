@@ -1,14 +1,59 @@
-version: 2
-commit-workflow:
-  jobs:
-    - build 
-scheduled-workflow:
-  triggers:
-    - schedule:
-        cron: "0 1 * * *"
-        filters:
-          branches:
-            only: try-schedule-workflow
-
-  jobs:
-    - build
+jobs:
+  build:
+    docker:
+      - image: <docker image>
+    steps:
+      - run:
+          command: |
+            echo "build"
+          name: build
+  deploy:
+    docker:
+      - image: <docker image>
+    steps:
+      - expiration/check
+      - run:
+          command: |
+            echo "deploy"
+          name: deploy
+  send-approval-link:
+    docker:
+      - image: <docker image>
+    steps:
+      - slack/notify:
+          message: |
+            Please check and approve Job to deploy.
+            https://circleci.com/workflow-run/${CIRCLE_WORKFLOW_ID}
+      - expiration/set:
+          ttl: 600
+orbs:
+  expiration: azihsoyn/job-expiration@0.1.0
+  slack: circleci/slack@1.0.0
+version: 2.1
+workflows:
+  example-workflow:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
+      - send-approval-link:
+          filters:
+            branches:
+              only: master
+          requires:
+            - build
+      - pending-approval:
+          filters:
+            branches:
+              only: master
+          requires:
+            - send-approval-link
+          type: approval
+      - deploy:
+          filters:
+            branches:
+              only: master
+          requires:
+            - pending-approval
+  version: 2
